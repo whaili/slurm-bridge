@@ -1,0 +1,63 @@
+---
+apiVersion: jobset.x-k8s.io/v1alpha2
+kind: JobSet
+metadata:
+  name: jobset-coordinator
+  namespace: slurm-bridge
+  annotations:
+    slinky.slurm.net/job-name: jobset-coordinator
+spec:
+  coordinator:
+    replicatedJob: leader
+    jobIndex: 0
+    podIndex: 0
+  replicatedJobs:
+    - name: leader
+      replicas: 1
+      template:
+        spec:
+          parallelism: 1
+          completions: 1
+          template:
+            spec:
+              containers:
+                - name: worker1
+                  image: busybox:stable
+                  command: [sh, -c, sleep 3]
+                  resources:
+                    requests:
+                      cpu: '1'
+                      memory: 100Mi
+                    limits:
+                      cpu: '1'
+                      memory: 100Mi
+    - name: workers
+      replicas: 2
+      template:
+        spec:
+          parallelism: 2
+          completions: 2
+          backoffLimit: 0
+          template:
+            spec:
+              containers:
+                - name: worker1
+                  image: busybox:stable
+                  command: [sh, -c, sleep 3]
+                  resources:
+                    requests:
+                      cpu: '1'
+                      memory: 100Mi
+                    limits:
+                      cpu: '1'
+                      memory: 100Mi
+                - name: worker2
+                  image: busybox:stable
+                  command: [sh, -c, sleep 3]
+                  resources:
+                    requests:
+                      cpu: '1'
+                      memory: 100Mi
+                    limits:
+                      cpu: '1'
+                      memory: 100Mi

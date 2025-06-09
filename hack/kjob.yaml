@@ -1,0 +1,34 @@
+---
+apiVersion: kjobctl.x-k8s.io/v1alpha1
+kind: ApplicationProfile
+metadata:
+  name: slurm-bridge
+  namespace: slurm-bridge
+spec:
+  supportedModes:
+    - name: Job
+      template: job-template
+---
+apiVersion: kjobctl.x-k8s.io/v1alpha1
+kind: JobTemplate
+metadata:
+  name: job-template
+  namespace: slurm-bridge
+template:
+  spec:
+    parallelism: 2
+    completions: 2
+    template:
+      spec:
+        containers:
+          - name: sleep
+            image: gcr.io/k8s-staging-perf-tests/sleep:v0.1.0
+            args: [5s]
+            resources:
+              requests:
+                cpu: '1'
+                memory: 100Mi
+              limits:
+                cpu: '1'
+                memory: 100Mi
+        restartPolicy: Never
