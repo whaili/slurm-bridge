@@ -11,15 +11,3 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Removed
-
-## v0.3.0
-
-### Added
-
-- Initial project release.
-
-### Fixed
-
-### Changed
-
-### Removed
