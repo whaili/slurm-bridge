@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fixed generation of values-dev.yaml in hack/kind.sh
+- Fixed setting placeholder cpu and memory from pod
 
 ### Changed
 
