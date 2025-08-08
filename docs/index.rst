@@ -3,6 +3,9 @@
    bridge with the `quickstart guide <quickstart.md>`__, or read on
    to learn more.
 
+Slurm-bridge
+================================
+
 `Slurm <https://slurm.schedmd.com/overview.html>`__ and
 `Kubernetes <https://kubernetes.io/>`__ are workload managers originally
 designed for different kinds of workloads. Kubernetes excels at
@@ -87,3 +90,13 @@ Current Limitations
 --------------
 
 Get started using ``slurm-bridge`` with the `quickstart guide <quickstart.md>`__!
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Documentation
+
+   admission <admission.md>
+   architecture <architecture.md>
+   controllers <controllers.md>
+   quickstart <quickstart.md>
+   scheduler <scheduler.md>
