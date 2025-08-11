@@ -1,6 +1,6 @@
    Download the slurm-bridge repository
    `here <https://github.com/SlinkyProject/slurm-bridge>`__, start using
-   bridge with the `quickstart guide <quickstart.md>`__, or read on
+   bridge with the `quickstart guide <quickstart.html>`__, or read on
    to learn more.
 
 Slurm-bridge
@@ -47,7 +47,7 @@ Kubernetes instance.
    :align: center
 
 For additional architectural notes, see the
-`architecture <architecture.md>`__ docs.
+`architecture <architecture.html>`__ docs.
 
 Features
 ~~~~~~~~
@@ -89,14 +89,14 @@ Current Limitations
 
 --------------
 
-Get started using ``slurm-bridge`` with the `quickstart guide <quickstart.md>`__!
+Get started using ``slurm-bridge`` with the `quickstart guide <quickstart.html>`__!
 
 .. toctree::
    :maxdepth: 1
    :caption: Documentation
 
-   admission <admission.md>
-   architecture <architecture.md>
-   controllers <controllers.md>
-   quickstart <quickstart.md>
-   scheduler <scheduler.md>
+   admission <admission.html>
+   architecture <architecture.html>
+   controllers <controllers.html>
+   quickstart <quickstart.html>
+   scheduler <scheduler.html>
