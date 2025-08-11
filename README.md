@@ -24,6 +24,7 @@ Run [Slurm] as a [Kubernetes] scheduler. A [Slinky] project.
   - [Limitations](#limitations)
   - [Installation](#installation)
   - [Documentation](#documentation)
+  - [Support and Development](#support-and-development)
   - [License](#license)
 
 <!-- mdformat-toc end -->
@@ -97,6 +98,17 @@ Project documentation is located in the [docs] directory of this repository.
 
 Slinky documentation can be found [here][slinky-docs].
 
+## Support and Development
+
+Feature requests, code contributions, and bug reports are welcome!
+
+Github/Gitlab submitted issues and PRs/MRs are handled on a best effort basis.
+
+The SchedMD official issue tracker is at <https://support.schedmd.com/>.
+
+To schedule a demo or simply to reach out, please
+[contact SchedMD][contact-schedmd].
+
 ## License
 
 Copyright (C) SchedMD LLC.
@@ -113,6 +125,7 @@ specific language governing permissions and limitations under the License.
 <!-- Links -->
 
 [architecture]: ./docs/architecture.md
+[contact-schedmd]: https://www.schedmd.com/slurm-resources/contact-schedmd/
 [docs]: ./docs/
 [kubernetes]: https://kubernetes.io/
 [quickstart]: ./docs/quickstart.md
