@@ -75,8 +75,18 @@ helm install cert-manager jetstack/cert-manager \
 
 Create a secret for slurm-bridge to communicate with Slurm.
 
+When running Slurm in `slurm-operator`:
+
 ```sh
-export SLURM_JWT=$(scontrol token username=slurm lifespan=infinite)
+export $(kubectl exec -n slurm -it slurm-controller-0 -- scontrol token username=slurm lifespan=infinite)
+kubectl create namespace slurm-bridge
+kubectl create secret generic slurm-bridge-jwt-token --namespace=slinky --from-literal="auth-token=$SLURM_JWT" --type=Opaque
+```
+
+When running Slurm on baremetal:
+
+```sh
+export $(scontrol token username=slurm lifespan=infinite)
 kubectl create namespace slurm-bridge
 kubectl create secret generic slurm-bridge-jwt-token --namespace=slinky --from-literal="auth-token=$SLURM_JWT" --type=Opaque
 ```
