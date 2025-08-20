@@ -113,22 +113,6 @@ function helm::uninstall() {
 	done
 }
 
-function slurm-bridge::helm() {
-	slurm-bridge::prerequisites
-
-	local slurm_values_yaml="$ROOT_DIR/helm/slurm-bridge/values-dev.yaml"
-	if [ ! -f "$slurm_values_yaml" ]; then
-		echo "ERROR: Missing values file: $slurm_values_yaml"
-		exit 1
-	fi
-	local helm_release="slurm-bridge"
-	if [ "$(helm list --all-namespaces --short --filter="$helm_release" | wc -l)" -eq 0 ]; then
-		helm install "$helm_release" "$ROOT_DIR"/helm/slurm-bridge/ -f "$slurm_values_yaml"
-	else
-		echo "WARNING: helm release '$helm_release' exists. Skipping."
-	fi
-}
-
 function slurm-bridge::skaffold() {
 	slurm-bridge::prerequisites
 	slurm-bridge::nodes
@@ -309,11 +293,7 @@ function main() {
 		return
 	fi
 	if $FLAG_BRIDGE; then
-		if $FLAG_HELM; then
-			slurm-bridge::helm
-		else
-			slurm-bridge::skaffold
-		fi
+		slurm-bridge::skaffold
 	fi
 	if $FLAG_KJOB; then
 		kjob::install
@@ -324,7 +304,6 @@ FLAG_DEBUG=false
 FLAG_CREATE=false
 FLAG_CONFIG="$SCRIPT_DIR/kind-config.yaml"
 FLAG_DELETE=false
-FLAG_HELM=false
 FLAG_INSTALL=false
 FLAG_UNINSTALL=false
 FLAG_BRIDGE=false
@@ -360,10 +339,6 @@ while :; do
 			echo "Flags --create and --delete are mutually exclusive!"
 			exit 1
 		fi
-		;;
-	--helm)
-		FLAG_HELM=true
-		shift
 		;;
 	--bridge)
 		FLAG_BRIDGE=true
