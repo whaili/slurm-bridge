@@ -88,10 +88,6 @@ function kind::delete() {
 	kind delete cluster --name "$cluster_name"
 }
 
-function pre::install() {
-	slurm-bridge::prerequisites
-}
-
 function helm::uninstall() {
 	local namespace=(
 		"scheduler-plugins"
@@ -288,7 +284,7 @@ function main() {
 	kind::start "$cluster_name" "$FLAG_CONFIG"
 
 	if $FLAG_INSTALL; then
-		pre::install
+		slurm-bridge::prerequisites
 		return
 	fi
 	slurm-bridge::skaffold
