@@ -17,6 +17,9 @@ const (
 	// AnnotationCpuPerTask sets the number of cpus
 	// per task
 	AnnotationCpuPerTask = "slinky.slurm.net/cpu-per-task"
+	// AnnotationGres overrides the default gres
+	// for the Slurm placeholder job.
+	AnnotationGres = "slinky.slurm.net/gres"
 	// AnnotationGroupId overrides the default groupid
 	// for the Slurm placeholder job.
 	AnnotationGroupId = "slinky.slurm.net/group-id"

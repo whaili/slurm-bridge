@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added GPU device plugin parsing into a GRES request
+
 ### Fixed
 
 ### Changed

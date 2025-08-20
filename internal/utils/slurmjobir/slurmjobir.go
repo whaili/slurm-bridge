@@ -22,6 +22,7 @@ type SlurmJobIRJobInfo struct {
 	Account      *string
 	CpuPerTask   *int32
 	Constraints  *string
+	Gres         *string
 	GroupId      *string
 	JobName      *string
 	Licenses     *string
@@ -99,6 +100,7 @@ func TranslateToSlurmJobIR(c client.Client, ctx context.Context, pod *corev1.Pod
 	}
 	slurmJobIR.RootPOM = *rootPOM
 	parsePodsCpuAndMemory(slurmJobIR)
+	parseGPUDevicePlugin(slurmJobIR)
 	err = parseAnnotations(slurmJobIR, rootPOM.Annotations)
 	return slurmJobIR, err
 }
@@ -134,6 +136,27 @@ func parsePodsCpuAndMemory(slurmJobIR *SlurmJobIR) {
 	}
 }
 
+/* Set GRES for the placeholder job to the maximum quantity of GPUs requested */
+func parseGPUDevicePlugin(slurmJobIR *SlurmJobIR) {
+
+	var gresMax resource.Quantity
+	gpuTypes := []corev1.ResourceName{
+		"nvidia.com/gpu",
+		"amd.com/gpu",
+	}
+	for _, p := range slurmJobIR.Pods.Items {
+		lim := resourcehelper.PodLimits(&p, resourcehelper.PodResourcesOptions{})
+		for _, vendor := range gpuTypes {
+			if quantity, exists := lim[vendor]; exists && quantity.Cmp(gresMax) > 0 {
+				gresMax = quantity
+			}
+		}
+	}
+	if !gresMax.IsZero() {
+		slurmJobIR.JobInfo.Gres = ptr.To("gres/gpu=" + gresMax.String())
+	}
+}
+
 func parseAnnotations(slurmJobIR *SlurmJobIR, anno map[string]string) error {
 	if slurmJobIR == nil || anno == nil {
 		return nil
@@ -145,6 +168,8 @@ func parseAnnotations(slurmJobIR *SlurmJobIR, anno map[string]string) error {
 			slurmJobIR.JobInfo.Account = &value
 		case wellknown.AnnotationConstraints:
 			slurmJobIR.JobInfo.Constraints = &value
+		case wellknown.AnnotationGres:
+			slurmJobIR.JobInfo.Gres = &value
 		case wellknown.AnnotationGroupId:
 			slurmJobIR.JobInfo.GroupId = &value
 		case wellknown.AnnotationCpuPerTask:

@@ -185,8 +185,9 @@ func (r *realSlurmControl) submitJob(ctx context.Context, pod *corev1.Pod, slurm
 					return &v0043.V0043Uint32NoValStruct{Set: ptr.To(false)}
 				}
 			}(),
-			UserId: slurmJobIR.JobInfo.UserId,
-			Wckey:  slurmJobIR.JobInfo.Wckey,
+			TresPerNode: slurmJobIR.JobInfo.Gres,
+			UserId:      slurmJobIR.JobInfo.UserId,
+			Wckey:       slurmJobIR.JobInfo.Wckey,
 		},
 	}
 	if !update {

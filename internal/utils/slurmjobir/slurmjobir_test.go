@@ -39,6 +39,25 @@ func podWithResources(cpuRequest, memoryRequest, cpuLimit, memoryLimit string) c
 	}
 }
 
+func podWithGPU(gpuVendor, gpuQuantity string) corev1.Pod {
+	return corev1.Pod{
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceName(gpuVendor): resource.MustParse(gpuQuantity),
+						},
+						Limits: corev1.ResourceList{
+							corev1.ResourceName(gpuVendor): resource.MustParse(gpuQuantity),
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func TestTranslateToSlurmJobIR(t *testing.T) {
 	podWithAnnotation := st.MakePod().Namespace("default").Name("testpod").Annotations(map[string]string{wellknown.AnnotationAccount: "test1", wellknown.AnnotationGroupId: "1000", wellknown.AnnotationUserId: "1000"}).Obj()
 	podWithBadAnnotation := st.MakePod().Namespace("default").Name("testpod").Annotations(map[string]string{wellknown.AnnotationCpuPerTask: "NaN"}).Obj()
@@ -243,6 +262,88 @@ func Test_parsePodsCpuAndMemory(t *testing.T) {
 	}
 }
 
+func Test_parseGPUDevicePlugin(t *testing.T) {
+	type args struct {
+		slurmJobIR *SlurmJobIR
+	}
+	tests := []struct {
+		name string
+		args args
+		want *string
+	}{
+		{
+			name: "No GPU requested",
+			args: args{
+				slurmJobIR: &SlurmJobIR{
+					Pods: corev1.PodList{
+						Items: []corev1.Pod{},
+					},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "Single GPUs requested",
+			args: args{
+				slurmJobIR: &SlurmJobIR{
+					Pods: corev1.PodList{
+						Items: []corev1.Pod{
+							podWithGPU("nvidia.com/gpu", "1"),
+						},
+					},
+				},
+			},
+			want: ptr.To("gres/gpu=1"),
+		},
+		{
+			name: "Multiple GPUs requested",
+			args: args{
+				slurmJobIR: &SlurmJobIR{
+					Pods: corev1.PodList{
+						Items: []corev1.Pod{
+							podWithGPU("nvidia.com/gpu", "2"),
+						},
+					},
+				},
+			},
+			want: ptr.To("gres/gpu=2"),
+		},
+		{
+			name: "Multiple pods, multiple GPUs requested",
+			args: args{
+				slurmJobIR: &SlurmJobIR{
+					Pods: corev1.PodList{
+						Items: []corev1.Pod{
+							podWithGPU("amd.com/gpu", "2"),
+							podWithGPU("amd.com/gpu", "1"),
+						},
+					},
+				},
+			},
+			want: ptr.To("gres/gpu=2"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parseGPUDevicePlugin(tt.args.slurmJobIR)
+			if !apiequality.Semantic.DeepEqual(tt.want, tt.args.slurmJobIR.JobInfo.Gres) {
+				var gotGres, wantGres interface{}
+				if tt.args.slurmJobIR.JobInfo.Gres != nil {
+					gotGres = *tt.args.slurmJobIR.JobInfo.Gres
+				} else {
+					gotGres = nil
+				}
+				if tt.want != nil {
+					wantGres = *tt.want
+				} else {
+					wantGres = nil
+				}
+				t.Errorf("parseGPUDevicePlugin() Gres = %v, want %v", gotGres, wantGres)
+			}
+		})
+	}
+}
+
 func Test_parseAnnotations(t *testing.T) {
 
 	type args struct {
@@ -271,6 +372,7 @@ func Test_parseAnnotations(t *testing.T) {
 					wellknown.AnnotationAccount:     "slurm",
 					wellknown.AnnotationConstraints: "foo",
 					wellknown.AnnotationCpuPerTask:  "200m",
+					wellknown.AnnotationGres:        "gres/gpu=2",
 					wellknown.AnnotationGroupId:     "1000",
 					wellknown.AnnotationJobName:     "jobname",
 					wellknown.AnnotationLicenses:    "mathlib",
@@ -291,6 +393,7 @@ func Test_parseAnnotations(t *testing.T) {
 					Account:     ptr.To("slurm"),
 					Constraints: ptr.To("foo"),
 					CpuPerTask:  ptr.To(int32(1)),
+					Gres:        ptr.To("gres/gpu=2"),
 					GroupId:     ptr.To("1000"),
 					JobName:     ptr.To("jobname"),
 					Licenses:    ptr.To("mathlib"),
