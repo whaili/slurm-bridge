@@ -317,6 +317,16 @@ func Test_parseAnnotations(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "BadMaxNodesAnnotation",
+			args: args{
+				slurmJobIR: &SlurmJobIR{},
+				anno: map[string]string{
+					wellknown.AnnotationMaxNodes: "foo",
+				},
+			},
+			wantErr: true,
+		},
+		{
 			name: "BadMemPerNodeAnnotation",
 			args: args{
 				slurmJobIR: &SlurmJobIR{},
