@@ -96,6 +96,7 @@ function helm::uninstall() {
 		"slinky"
 		"cert-manager"
 		"jobset"
+		"lws"
 	)
 	if $FLAG_EXTRAS; then
 		namespace+=("metrics-server")
