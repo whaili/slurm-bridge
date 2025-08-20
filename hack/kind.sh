@@ -259,7 +259,6 @@ ONESHOT OPTIONS:
 
 OPTIONS:
 	--config=PATH       Use the specified kind config when creating.
-	--bridge            Deploy slurm-bridge with skaffold.
 	--extras            Install optional dependencies (metrics, prometheus, keda).
 	--kjob              Install kjob CRDs and build kubectl-kjob
 
@@ -292,9 +291,7 @@ function main() {
 		pre::install
 		return
 	fi
-	if $FLAG_BRIDGE; then
-		slurm-bridge::skaffold
-	fi
+	slurm-bridge::skaffold
 	if $FLAG_KJOB; then
 		kjob::install
 	fi
@@ -306,7 +303,6 @@ FLAG_CONFIG="$SCRIPT_DIR/kind-config.yaml"
 FLAG_DELETE=false
 FLAG_INSTALL=false
 FLAG_UNINSTALL=false
-FLAG_BRIDGE=false
 FLAG_EXTRAS=false
 FLAG_KJOB=false
 
@@ -339,10 +335,6 @@ while :; do
 			echo "Flags --create and --delete are mutually exclusive!"
 			exit 1
 		fi
-		;;
-	--bridge)
-		FLAG_BRIDGE=true
-		shift
 		;;
 	--install)
 		FLAG_INSTALL=true
