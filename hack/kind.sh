@@ -225,10 +225,7 @@ function slurm::install() {
 }
 
 function slurm-bridge::secret() {
-	kubectl delete secret slurm-bridge-jwt-token --namespace=slinky || true
-	SLURM_JWT="$(kubectl --namespace=slurm get secrets slurm-token-slurm -o jsonpath="{.data.auth-token}" | base64 --decode)"
-	export SLURM_JWT
-	kubectl create secret generic slurm-bridge-jwt-token --namespace=slinky --from-literal="auth-token=$SLURM_JWT" --type=Opaque
+	kubectl apply -f "${SCRIPT_DIR}"/token.yaml
 }
 
 function kjob::install() {

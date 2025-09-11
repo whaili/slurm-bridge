@@ -78,10 +78,29 @@ Create a secret for slurm-bridge to communicate with Slurm.
 When running Slurm in `slurm-operator`:
 
 ```sh
-export $(kubectl exec -n slurm -it slurm-controller-0 -- scontrol token username=slurm lifespan=infinite)
-kubectl create namespace slurm-bridge
-kubectl create secret generic slurm-bridge-jwt-token --namespace=slinky --from-literal="auth-token=$SLURM_JWT" --type=Opaque
+kubectl apply -f - <<EOF
+apiVersion: slinky.slurm.net/v1alpha1
+kind: Token
+metadata:
+  name: slurm-bridge-token
+  namespace: slinky
+spec:
+  jwtHs256KeyRef:
+    name: slurm-auth-jwths256
+    key: jwt_hs256.key
+    namespace: slurm
+  secretRef:
+    name: slurm-bridge-token
+    key: auth-token
+  username: slurm
+  refresh: true
+  lifetime: 8760h
+EOF
 ```
+
+**NOTE**: A long lifetime is used as `slurm-bridge` does not automatically
+restart when the secret is refreshed. This is a limitation that will be
+addressed in a subsequent release.
 
 When running Slurm on baremetal:
 
