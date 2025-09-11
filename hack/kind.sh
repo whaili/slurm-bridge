@@ -373,7 +373,7 @@ while :; do
 		break
 		;;
 	*)
-		log::error "Unknown option: $1"
+		echo "Unknown option: $1" >&2
 		exit 1
 		;;
 	esac
