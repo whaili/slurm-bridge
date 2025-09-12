@@ -180,8 +180,14 @@ function slurm-bridge::prerequisites() {
 }
 
 function slurm-bridge::nodes() {
+
+	# Wait for slurm-controller-0 to be ready and give the pod
+	# additional time to wait out a reconfigure restart.
+	kubectl wait --for=condition=Ready -n slurm pod/slurm-controller-0 --timeout=120s
+	sleep 10
+
 	local partition="slurm-bridge"
-	if [ ! "$(kubectl exec -it -n slurm pods/slurm-controller-0 -- scontrol show partition=$partition >/dev/null 2>&1)" ]; then
+	if ! kubectl exec -n slurm pods/slurm-controller-0 -- scontrol show partition=$partition >/dev/null 2>&1; then
 		kubectl exec -n slurm pods/slurm-controller-0 -- \
 			scontrol create partition="$partition"
 	fi
@@ -189,29 +195,32 @@ function slurm-bridge::nodes() {
 	echo "$BRIDGE_NODES" | while IFS= read -r node; do
 		cpus=$(kubectl get node "$node" -o jsonpath='{.status.capacity.cpu}')
 		memory=$(kubectl get node "$node" -o jsonpath='{.status.capacity.memory}')
-		kubectl exec -n slurm pods/slurm-controller-0 -- \
-			scontrol create nodename="$node" \
-			cpus="$cpus" RealMemory="${memory%Ki}" \
-			state=EXTERNAL
+		if ! kubectl exec -n slurm pods/slurm-controller-0 -- scontrol show node="$node" >/dev/null 2>&1; then
+			kubectl exec -n slurm pods/slurm-controller-0 -- \
+				scontrol create nodename="$node" \
+				cpus="$cpus" RealMemory="${memory%Ki}" \
+				state=EXTERNAL
+		fi
 	done
 	kubectl exec -n slurm pods/slurm-controller-0 -- \
 		scontrol update partitionname="$partition" nodes="$(echo "$BRIDGE_NODES" | paste -sd, -)"
 }
 
 function slurm::install() {
-	local version="0.3.0"
+	local version="0.4.0"
 
 	local slurmOperator="slurm-operator"
 	if [ "$(helm list --all-namespaces --short --filter="^${slurmOperator}$" | wc -l)" -eq 0 ]; then
 		helm install $slurmOperator oci://ghcr.io/slinkyproject/charts/slurm-operator \
-			--version="$version" --namespace=slinky --create-namespace --wait
+			--version="$version" --namespace=slinky --create-namespace --wait \
+			--set 'crds.enabled=true'
 	fi
 
 	local slurm="slurm"
 	if [ "$(helm list --all-namespaces --short --filter="^${slurm}$" | wc -l)" -eq 0 ]; then
 		helm install slurm oci://ghcr.io/slinkyproject/charts/slurm \
 			--version="$version" --namespace=slurm --create-namespace --wait \
-			--set "compute.nodesets[0].replicas=0"
+			--set "nodesets.slinky.enabled=false"
 	fi
 }
 
