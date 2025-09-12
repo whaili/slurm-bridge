@@ -240,7 +240,7 @@ function kjob::install() {
 		make install
 		make kubectl-kjob
 	)
-	kubectl apply -f ${SCRIPT_DIR}/kjob.yaml
+	kubectl apply -f "${SCRIPT_DIR}"/kjob.yaml
 	cp $kjob_path/kjob-${version}/bin/kubectl-kjob "$SCRIPT_DIR/kubectl-kjob"
 	echo -e "\nRun the following command to install the kubectl kjob plugin:"
 	echo -e "sudo cp /tmp/kjob/kjob-${version}/bin/kubectl-kjob /usr/local/bin/kubectl-kjob\n"
