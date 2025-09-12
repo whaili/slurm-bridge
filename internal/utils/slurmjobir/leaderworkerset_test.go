@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/kubernetes/pkg/scheduler/framework"
+	fwk "k8s.io/kube-scheduler/framework"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -63,7 +63,7 @@ func Test_translator_PreFilterLWS(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   *framework.Status
+		want   *fwk.Status
 	}{
 		{
 			name: "Fail to get LWS",
@@ -75,7 +75,7 @@ func Test_translator_PreFilterLWS(t *testing.T) {
 				pod:        &corev1.Pod{},
 				slurmJobIR: &SlurmJobIR{},
 			},
-			want: framework.NewStatus(framework.Error, ErrorLWSCouldNotGet.Error()),
+			want: fwk.NewStatus(fwk.Error, ErrorLWSCouldNotGet.Error()),
 		},
 		{
 			name: "Not enough pods for group",
@@ -107,7 +107,7 @@ func Test_translator_PreFilterLWS(t *testing.T) {
 					},
 				},
 			},
-			want: framework.NewStatus(framework.Error, ErrorInsuffientPods.Error()),
+			want: fwk.NewStatus(fwk.Error, ErrorInsuffientPods.Error()),
 		},
 		{
 			name: "Invalid state with placeholder and insufficient pods",
@@ -140,7 +140,7 @@ func Test_translator_PreFilterLWS(t *testing.T) {
 					},
 				},
 			},
-			want: framework.NewStatus(framework.Error, ErrorPlaceholderJobInvalid.Error()),
+			want: fwk.NewStatus(fwk.Error, ErrorPlaceholderJobInvalid.Error()),
 		},
 		{
 			name: "group has enough pods",
@@ -177,7 +177,7 @@ func Test_translator_PreFilterLWS(t *testing.T) {
 					},
 				},
 			},
-			want: framework.NewStatus(framework.Success),
+			want: fwk.NewStatus(fwk.Success),
 		},
 	}
 	for _, tt := range tests {

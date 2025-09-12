@@ -15,7 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/kubernetes/pkg/scheduler/framework"
+	fwk "k8s.io/kube-scheduler/framework"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -271,7 +271,7 @@ func Test_translator_PreFilterPodGroup(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   *framework.Status
+		want   *fwk.Status
 	}{
 		{
 			name: "Could not get PodGroup",
@@ -289,7 +289,7 @@ func Test_translator_PreFilterPodGroup(t *testing.T) {
 					},
 				},
 			},
-			want: framework.NewStatus(framework.Error, ErrorPodGroupCouldNotGet.Error()),
+			want: fwk.NewStatus(fwk.Error, ErrorPodGroupCouldNotGet.Error()),
 		},
 		{
 			name: "PodGroup phase is Failed",
@@ -313,7 +313,7 @@ func Test_translator_PreFilterPodGroup(t *testing.T) {
 					},
 				},
 			},
-			want: framework.NewStatus(framework.UnschedulableAndUnresolvable, ErrorPodGroupFailed.Error()),
+			want: fwk.NewStatus(fwk.UnschedulableAndUnresolvable, ErrorPodGroupFailed.Error()),
 		},
 		{
 			name: "PodGroup phase is Finished",
@@ -337,7 +337,7 @@ func Test_translator_PreFilterPodGroup(t *testing.T) {
 					},
 				},
 			},
-			want: framework.NewStatus(framework.UnschedulableAndUnresolvable, ErrorPodGroupFinished.Error()),
+			want: fwk.NewStatus(fwk.UnschedulableAndUnresolvable, ErrorPodGroupFinished.Error()),
 		},
 		{
 			name: "PodGroup phase is Running",
@@ -361,7 +361,7 @@ func Test_translator_PreFilterPodGroup(t *testing.T) {
 					},
 				},
 			},
-			want: framework.NewStatus(framework.UnschedulableAndUnresolvable, ErrorPodGroupRunning.Error()),
+			want: fwk.NewStatus(fwk.UnschedulableAndUnresolvable, ErrorPodGroupRunning.Error()),
 		},
 		{
 			name: "PodGroup phase is Unknown",
@@ -385,7 +385,7 @@ func Test_translator_PreFilterPodGroup(t *testing.T) {
 					},
 				},
 			},
-			want: framework.NewStatus(framework.UnschedulableAndUnresolvable, ErrorPodGroupUnknown.Error()),
+			want: fwk.NewStatus(fwk.UnschedulableAndUnresolvable, ErrorPodGroupUnknown.Error()),
 		},
 		{
 			name: "Not enough pods for minmembers",
@@ -410,7 +410,7 @@ func Test_translator_PreFilterPodGroup(t *testing.T) {
 				},
 				pod: &corev1.Pod{},
 			},
-			want: framework.NewStatus(framework.Error, ErrorInsuffientPods.Error()),
+			want: fwk.NewStatus(fwk.Error, ErrorInsuffientPods.Error()),
 		},
 		{
 			name: "Not enough pods for minmembers and invalid pod",
@@ -439,7 +439,7 @@ func Test_translator_PreFilterPodGroup(t *testing.T) {
 					return p
 				}(),
 			},
-			want: framework.NewStatus(framework.Error, ErrorPlaceholderJobInvalid.Error()),
+			want: fwk.NewStatus(fwk.Error, ErrorPlaceholderJobInvalid.Error()),
 		},
 		{
 			name: "Enough pods for minmembers",
@@ -469,7 +469,7 @@ func Test_translator_PreFilterPodGroup(t *testing.T) {
 				},
 				pod: &corev1.Pod{},
 			},
-			want: framework.NewStatus(framework.Success),
+			want: fwk.NewStatus(fwk.Success),
 		},
 	}
 	for _, tt := range tests {

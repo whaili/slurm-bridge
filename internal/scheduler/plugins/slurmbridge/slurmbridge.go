@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2"
+	fwk "k8s.io/kube-scheduler/framework"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	jobset "sigs.k8s.io/jobset/api/jobset/v1alpha2"
@@ -123,13 +124,13 @@ func New(ctx context.Context, obj runtime.Object, handle framework.Handle) (fram
 // queue.
 // If a placeholder job is found, determine which node(s) have been assigned to the
 // Slurm job and update state so the Filter plugin can filter out the assigned node(s)
-func (sb *SlurmBridge) PreFilter(ctx context.Context, state *framework.CycleState, pod *corev1.Pod) (*framework.PreFilterResult, *framework.Status) {
+func (sb *SlurmBridge) PreFilter(ctx context.Context, state fwk.CycleState, pod *corev1.Pod, nodeInfo []fwk.NodeInfo) (*framework.PreFilterResult, *fwk.Status) {
 	logger := klog.FromContext(ctx)
 
 	// Populate podToJob representation to validate pod label and annotation
 	if err := sb.validatePodToJob(ctx, pod); err != nil {
 		logger.Error(err, "error validating pod against podToJob")
-		return nil, framework.NewStatus(framework.Error, err.Error())
+		return nil, fwk.NewStatus(fwk.Error, err.Error())
 	}
 
 	// If a placeholderJob exists and a node has been allocated, return immediately
@@ -140,25 +141,25 @@ func (sb *SlurmBridge) PreFilter(ctx context.Context, state *framework.CycleStat
 		node != "" {
 		phNode := make(sets.Set[string])
 		phNode.Insert(node)
-		return &framework.PreFilterResult{NodeNames: phNode}, framework.NewStatus(framework.Success)
+		return &framework.PreFilterResult{NodeNames: phNode}, fwk.NewStatus(fwk.Success)
 	}
 
 	// Construct an intermediate representation of the Slurm placeholder job
 	slurmJobIR, err := slurmjobir.TranslateToSlurmJobIR(sb.Client, ctx, pod)
 	if err != nil {
-		return nil, framework.NewStatus(framework.Error, err.Error())
+		return nil, fwk.NewStatus(fwk.Error, err.Error())
 	}
 
 	// Determine if a placeholder job for the pod exists in Slurm
 	placeholderJob, err := sb.slurmControl.GetJob(ctx, pod)
 	if err != nil {
 		logger.Error(err, "error checking for Slurm job")
-		return nil, framework.NewStatus(framework.Error, err.Error())
+		return nil, fwk.NewStatus(fwk.Error, err.Error())
 	}
 
 	// Perform resource specific PreFilter
 	fs := slurmjobir.PreFilter(sb.Client, ctx, pod, slurmJobIR)
-	if fs.Code() != framework.Success {
+	if fs.Code() != fwk.Success {
 		// If the placeholderjob is determined to no longer be valid
 		// delete the placeholder job and remove the associated annotations
 		for _, r := range fs.Reasons() {
@@ -166,7 +167,7 @@ func (sb *SlurmBridge) PreFilter(ctx context.Context, state *framework.CycleStat
 				logger.Error(err, "placeholder Job no longer valid, deleting job")
 				err := sb.deletePlaceholderJob(ctx, pod)
 				if err != nil {
-					return nil, framework.NewStatus(framework.Error, err.Error())
+					return nil, fwk.NewStatus(fwk.Error, err.Error())
 				}
 			}
 		}
@@ -185,18 +186,18 @@ func (sb *SlurmBridge) PreFilter(ctx context.Context, state *framework.CycleStat
 			for _, e := range aggErrors {
 				if strings.ToLower(e.Error()) == ErrorNodeConfigInvalid.Error() {
 					logger.Error(err, "invalid node configuration for placeholder job")
-					return nil, framework.NewStatus(framework.UnschedulableAndUnresolvable, e.Error())
+					return nil, fwk.NewStatus(fwk.UnschedulableAndUnresolvable, e.Error())
 				}
 			}
 			logger.Error(err, "error submitting Slurm job")
-			return nil, framework.NewStatus(framework.Error, err.Error())
+			return nil, fwk.NewStatus(fwk.Error, err.Error())
 		}
 		logger.V(5).Info("submitted placeholder to slurm", klog.KObj(pod))
 		err = sb.labelPodsWithJobId(ctx, jobid, slurmJobIR)
 		if err != nil {
-			return nil, framework.NewStatus(framework.Error, err.Error())
+			return nil, fwk.NewStatus(fwk.Error, err.Error())
 		}
-		return nil, framework.NewStatus(framework.Pending)
+		return nil, fwk.NewStatus(fwk.Pending)
 	} else {
 		logger.V(4).Info("placeholder job exists")
 		if placeholderJob.Nodes == "" {
@@ -206,32 +207,32 @@ func (sb *SlurmBridge) PreFilter(ctx context.Context, state *framework.CycleStat
 			jobid, err := sb.slurmControl.UpdateJob(ctx, pod, slurmJobIR)
 			if err != nil {
 				logger.Error(err, "error updating Slurm job")
-				return nil, framework.NewStatus(framework.Pending, err.Error())
+				return nil, fwk.NewStatus(fwk.Pending, err.Error())
 			}
 			// Update the pods with the jobId label in case there
 			// are new pods included in slurmJobIR after the update.
 			err = sb.labelPodsWithJobId(ctx, jobid, slurmJobIR)
 			if err != nil {
 				logger.Error(err, "error labeling pods after update")
-				return nil, framework.NewStatus(framework.Error, err.Error())
+				return nil, fwk.NewStatus(fwk.Error, err.Error())
 			}
-			return nil, framework.NewStatus(framework.Pending, "no nodes assigned")
+			return nil, fwk.NewStatus(fwk.Pending, "no nodes assigned")
 		}
 		slurmNodes, _ := hostlist.Expand(placeholderJob.Nodes)
 		kubeNodes, err := sb.slurmToKubeNodes(ctx, slurmNodes)
 		if err != nil {
-			return nil, framework.NewStatus(framework.Error, err.Error())
+			return nil, fwk.NewStatus(fwk.Error, err.Error())
 		}
 		err = sb.annotatePodsWithNodes(ctx, placeholderJob.JobId, kubeNodes.Clone(), &slurmJobIR.Pods)
 		if err != nil {
-			return nil, framework.NewStatus(framework.Error, err.Error())
+			return nil, fwk.NewStatus(fwk.Error, err.Error())
 		}
 		// Update pod after performing a Patch so subsequent plugins have
 		// accurate annotations
 		if err := sb.Get(ctx, client.ObjectKeyFromObject(pod), pod); err != nil {
-			return nil, framework.NewStatus(framework.Error, err.Error())
+			return nil, fwk.NewStatus(fwk.Error, err.Error())
 		}
-		return &framework.PreFilterResult{NodeNames: kubeNodes}, framework.NewStatus(framework.Success, "")
+		return &framework.PreFilterResult{NodeNames: kubeNodes}, fwk.NewStatus(fwk.Success, "")
 	}
 }
 
@@ -355,13 +356,13 @@ func (sb *SlurmBridge) PreFilterExtensions() framework.PreFilterExtensions {
 }
 
 // Filter will verify the node annotation matches the node being filtered.
-func (sb *SlurmBridge) Filter(ctx context.Context, state *framework.CycleState, pod *corev1.Pod, nodeInfo *framework.NodeInfo) *framework.Status {
+func (sb *SlurmBridge) Filter(ctx context.Context, state fwk.CycleState, pod *corev1.Pod, nodeInfo fwk.NodeInfo) *fwk.Status {
 	logger := klog.FromContext(ctx)
 	logger.V(5).Info("filter func", "pod", klog.KObj(pod), "node", nodeInfo.Node().Name)
-	if pod.Annotations[wellknown.AnnotationPlaceholderNode] == nodeInfo.GetName() {
-		return framework.NewStatus(framework.Success, "")
+	if pod.Annotations[wellknown.AnnotationPlaceholderNode] == nodeInfo.Node().Name {
+		return fwk.NewStatus(fwk.Success, "")
 	}
-	return framework.NewStatus(framework.Unschedulable, "node does not match annotation")
+	return fwk.NewStatus(fwk.Unschedulable, "node does not match annotation")
 }
 
 func (sb *SlurmBridge) validatePodToJob(ctx context.Context, pod *corev1.Pod) error {

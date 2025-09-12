@@ -79,6 +79,9 @@ rules:
 - apiGroups: ["jobset.x-k8s.io"]
   resources: ["jobsets", "jobsets/status"]
   verbs: ["get", "list", "watch", "create"]
+- apiGroups: ["resource.k8s.io"]
+  resources: ["deviceclasses", "resourceslices", "resourceclaims"]
+  verbs: ["get", "list", "watch"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1

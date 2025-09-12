@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	resourcehelper "k8s.io/component-helpers/resource"
-	"k8s.io/kubernetes/pkg/scheduler/framework"
+	fwk "k8s.io/kube-scheduler/framework"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -50,7 +50,7 @@ type translator struct {
 	ctx context.Context
 }
 
-func PreFilter(c client.Client, ctx context.Context, pod *corev1.Pod, slurmJobIR *SlurmJobIR) *framework.Status {
+func PreFilter(c client.Client, ctx context.Context, pod *corev1.Pod, slurmJobIR *SlurmJobIR) *fwk.Status {
 	t := translator{Reader: c, ctx: ctx}
 	switch slurmJobIR.RootPOM.TypeMeta {
 	case podGroup_v1alpha1:
@@ -58,7 +58,7 @@ func PreFilter(c client.Client, ctx context.Context, pod *corev1.Pod, slurmJobIR
 	case lws_v1:
 		return t.PreFilterLWS(pod, slurmJobIR)
 	default:
-		return framework.NewStatus(framework.Success)
+		return fwk.NewStatus(fwk.Success)
 	}
 }
 

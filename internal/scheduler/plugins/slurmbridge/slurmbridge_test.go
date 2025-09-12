@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/informers"
 	clientsetfake "k8s.io/client-go/kubernetes/fake"
+	fwk "k8s.io/kube-scheduler/framework"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"k8s.io/kubernetes/pkg/scheduler/framework/plugins/defaultbinder"
 	"k8s.io/kubernetes/pkg/scheduler/framework/plugins/queuesort"
@@ -137,16 +138,17 @@ func TestSlurmBridge_PreFilter(t *testing.T) {
 		handle        framework.Handle
 	}
 	type args struct {
-		ctx   context.Context
-		state *framework.CycleState
-		pod   *corev1.Pod
+		ctx      context.Context
+		state    fwk.CycleState
+		pod      *corev1.Pod
+		nodeinfo []fwk.NodeInfo
 	}
 	tests := []struct {
 		name   string
 		fields fields
 		args   args
 		want   *framework.PreFilterResult
-		want1  *framework.Status
+		want1  *fwk.Status
 	}{
 		{
 			name: "JobId and Node assignment exist in annotations",
@@ -184,7 +186,7 @@ func TestSlurmBridge_PreFilter(t *testing.T) {
 					Obj(),
 			},
 			want:  &framework.PreFilterResult{NodeNames: sets.New("node1")},
-			want1: framework.NewStatus(framework.Success),
+			want1: fwk.NewStatus(fwk.Success),
 		},
 		{
 			name: "Error checking for Slurm job",
@@ -209,7 +211,7 @@ func TestSlurmBridge_PreFilter(t *testing.T) {
 				pod:   pod.DeepCopy(),
 			},
 			want:  nil,
-			want1: framework.NewStatus(framework.Error, ErrorNodeConfigInvalid.Error()),
+			want1: fwk.NewStatus(fwk.Error, ErrorNodeConfigInvalid.Error()),
 		},
 		{
 			name: "Creating a placeholder job fails",
@@ -234,7 +236,7 @@ func TestSlurmBridge_PreFilter(t *testing.T) {
 				pod:   pod.DeepCopy(),
 			},
 			want:  nil,
-			want1: framework.NewStatus(framework.Error, ErrorPodUpdateFailed.Error()),
+			want1: fwk.NewStatus(fwk.Error, ErrorPodUpdateFailed.Error()),
 		},
 		{
 			name: "Creating a placeholder job fails with invalid node resource request",
@@ -259,7 +261,7 @@ func TestSlurmBridge_PreFilter(t *testing.T) {
 				pod:   pod.DeepCopy(),
 			},
 			want:  nil,
-			want1: framework.NewStatus(framework.UnschedulableAndUnresolvable, ErrorNodeConfigInvalid.Error()),
+			want1: fwk.NewStatus(fwk.UnschedulableAndUnresolvable, ErrorNodeConfigInvalid.Error()),
 		},
 		{
 			name: "Create a placeholder job",
@@ -285,7 +287,7 @@ func TestSlurmBridge_PreFilter(t *testing.T) {
 				pod:   pod.DeepCopy(),
 			},
 			want:  nil,
-			want1: framework.NewStatus(framework.Pending),
+			want1: fwk.NewStatus(fwk.Pending),
 		},
 		{
 			name: "Placeholder job exists but nodes are not assigned",
@@ -320,7 +322,7 @@ func TestSlurmBridge_PreFilter(t *testing.T) {
 				pod:   pod.DeepCopy(),
 			},
 			want:  nil,
-			want1: framework.NewStatus(framework.Pending, "no nodes assigned"),
+			want1: fwk.NewStatus(fwk.Pending, "no nodes assigned"),
 		},
 		{
 			name: "Placeholder job exists",
@@ -356,7 +358,7 @@ func TestSlurmBridge_PreFilter(t *testing.T) {
 				pod:   pod.DeepCopy(),
 			},
 			want:  &framework.PreFilterResult{NodeNames: sets.New("node1")},
-			want1: framework.NewStatus(framework.Success, ""),
+			want1: fwk.NewStatus(fwk.Success, ""),
 		},
 	}
 	for _, tt := range tests {
@@ -367,7 +369,7 @@ func TestSlurmBridge_PreFilter(t *testing.T) {
 				slurmControl:  tt.fields.slurmControl,
 				handle:        tt.fields.handle,
 			}
-			got, got1 := sb.PreFilter(tt.args.ctx, tt.args.state, tt.args.pod)
+			got, got1 := sb.PreFilter(tt.args.ctx, tt.args.state, tt.args.pod, tt.args.nodeinfo)
 			if !apiequality.Semantic.DeepEqual(got, tt.want) {
 				t.Errorf("SlurmBridge.PreFilter() got = %v, want %v", got, tt.want)
 			}
@@ -433,7 +435,7 @@ func TestSlurmBridge_Filter(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   *framework.Status
+		want   *fwk.Status
 	}{
 		{
 			name: "Node in annotation matches",
@@ -448,7 +450,7 @@ func TestSlurmBridge_Filter(t *testing.T) {
 				pod:      podWithAnnotation.DeepCopy(),
 				nodeInfo: nodeInfo,
 			},
-			want: framework.NewStatus(framework.Success, ""),
+			want: fwk.NewStatus(fwk.Success, ""),
 		},
 		{
 			name: "Node in annotation does not match",
@@ -462,7 +464,7 @@ func TestSlurmBridge_Filter(t *testing.T) {
 				pod:      podWithoutAnnotation.DeepCopy(),
 				nodeInfo: nodeInfo,
 			},
-			want: framework.NewStatus(framework.Unschedulable, "node does not match annotation"),
+			want: fwk.NewStatus(fwk.Unschedulable, "node does not match annotation"),
 		},
 	}
 	for _, tt := range tests {

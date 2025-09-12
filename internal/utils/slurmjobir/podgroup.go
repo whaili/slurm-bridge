@@ -11,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/kubernetes/pkg/scheduler/framework"
+	fwk "k8s.io/kube-scheduler/framework"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	sched "sigs.k8s.io/scheduler-plugins/apis/scheduling/v1alpha1"
 )
@@ -28,24 +28,24 @@ var (
 )
 
 // PreFilter performs PodGroup specific PreFilter functions
-func (t *translator) PreFilterPodGroup(pod *corev1.Pod, slurmJobIR *SlurmJobIR) *framework.Status {
+func (t *translator) PreFilterPodGroup(pod *corev1.Pod, slurmJobIR *SlurmJobIR) *fwk.Status {
 	podGroup := &sched.PodGroup{}
 	key := client.ObjectKey{Namespace: slurmJobIR.RootPOM.GetNamespace(), Name: slurmJobIR.RootPOM.GetName()}
 	if err := t.Get(t.ctx, key, podGroup); err != nil {
-		return framework.NewStatus(framework.Error, ErrorPodGroupCouldNotGet.Error())
+		return fwk.NewStatus(fwk.Error, ErrorPodGroupCouldNotGet.Error())
 	}
 
 	// If the PodGroup is in a state other than Running or Scheduling the pod will not
 	// be evaluated by the SlurmBridge scheduler.
 	switch podGroup.Status.Phase {
 	case sched.PodGroupRunning:
-		return framework.NewStatus(framework.UnschedulableAndUnresolvable, ErrorPodGroupRunning.Error())
+		return fwk.NewStatus(fwk.UnschedulableAndUnresolvable, ErrorPodGroupRunning.Error())
 	case sched.PodGroupUnknown:
-		return framework.NewStatus(framework.UnschedulableAndUnresolvable, ErrorPodGroupUnknown.Error())
+		return fwk.NewStatus(fwk.UnschedulableAndUnresolvable, ErrorPodGroupUnknown.Error())
 	case sched.PodGroupFailed:
-		return framework.NewStatus(framework.UnschedulableAndUnresolvable, ErrorPodGroupFailed.Error())
+		return fwk.NewStatus(fwk.UnschedulableAndUnresolvable, ErrorPodGroupFailed.Error())
 	case sched.PodGroupFinished:
-		return framework.NewStatus(framework.UnschedulableAndUnresolvable, ErrorPodGroupFinished.Error())
+		return fwk.NewStatus(fwk.UnschedulableAndUnresolvable, ErrorPodGroupFinished.Error())
 	}
 
 	// Ensure there are enough pods to satisfy MinMembers. Don't count pods
@@ -64,12 +64,12 @@ func (t *translator) PreFilterPodGroup(pod *corev1.Pod, slurmJobIR *SlurmJobIR) 
 	// to indicate placeholder job cleanup must occur.
 	if numPodsWaiting < int(podGroup.Spec.MinMember) {
 		if pod.Labels[wellknown.LabelPlaceholderJobId] == "" {
-			return framework.NewStatus(framework.Error, ErrorInsuffientPods.Error())
+			return fwk.NewStatus(fwk.Error, ErrorInsuffientPods.Error())
 		} else {
-			return framework.NewStatus(framework.Error, ErrorPlaceholderJobInvalid.Error())
+			return fwk.NewStatus(fwk.Error, ErrorPlaceholderJobInvalid.Error())
 		}
 	}
-	return framework.NewStatus(framework.Success)
+	return fwk.NewStatus(fwk.Success)
 }
 
 // GetPodGroup returns the PodGroup that a Pod belongs to in cache.

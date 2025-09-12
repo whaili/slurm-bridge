@@ -79,7 +79,7 @@ func (r *NodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res c
 	startTime := time.Now()
 	defer func() {
 		if retErr == nil {
-			if res.Requeue || res.RequeueAfter > 0 {
+			if res.RequeueAfter > 0 {
 				logger.Info("Finished syncing Node", "duration", time.Since(startTime), "result", res)
 			} else {
 				logger.Info("Finished syncing Node", "duration", time.Since(startTime))

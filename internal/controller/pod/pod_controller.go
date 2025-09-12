@@ -83,7 +83,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ct
 	startTime := time.Now()
 	defer func() {
 		if retErr == nil {
-			if res.Requeue || res.RequeueAfter > 0 {
+			if res.RequeueAfter > 0 {
 				logger.Info("Finished syncing Pod", "duration", time.Since(startTime), "result", res)
 			} else {
 				logger.Info("Finished syncing Pod", "duration", time.Since(startTime))
