@@ -14,7 +14,20 @@
 
 ## Overview
 
-This component is comprised of multiple controllers with specialized tasks.
+[The Kubernetes documentation](https://kubernetes.io/docs/concepts/architecture/controller/)
+defines controllers as:
+
+> control loops that watch the state of your cluster, then make or request
+> changes where needed. Each controller tries to move the current cluster state
+> closer to the desired state.
+
+Within `slurm-bridge`, there are multiple controllers that manage the state of
+different bridge components:
+
+- **Node Controller** - Responsible for tainting the Kubernetes nodes that are
+  managed by `slurm-bridge`
+- **Workload Controller** - Responsible for synchronizing Slurm and Kubernetes
+  workloads on the nodes that are managed by `slurm-bridge`
 
 ## Node Controller
 

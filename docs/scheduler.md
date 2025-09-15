@@ -7,14 +7,23 @@
 - [Scheduler](#scheduler)
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
+  - [Design](#design)
     - [Sequence Diagram](#sequence-diagram)
 
 <!-- mdformat-toc end -->
 
 ## Overview
 
-The scheduler controller is responsible for [scheduling] pending pods onto
-nodes.
+In Kubernetes, scheduling refers to making sure that pods are matched to nodes
+so that the kubelet can run them.
+
+The scheduler controller in `slurm-bridge` is responsible for [scheduling]
+eligible pods onto nodes that are managed by `slurm-bridge`. In doing so, the
+`slurm-bridge` scheduler interacts with the Slurm REST API in order to acquire
+allocations for its' workloads. In `slurm-bridge`, `slurmctld` serves as the
+source of truth for scheduling decisions.
+
+## Design
 
 This scheduler is designed to be a non-primary scheduler (e.g. should not
 replace the default [kube-scheduler]). This means that only certain pods should

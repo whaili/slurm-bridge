@@ -32,16 +32,30 @@ Run [Slurm] as a [Kubernetes] scheduler. A [Slinky] project.
 ## Overview
 
 [Slurm] and [Kubernetes] are workload managers originally designed for different
-kinds of workloads. In broad strokes: Kubernetes excels at scheduling workloads
-that typically run for an indefinite amount of time, with potentially vague
-resource requirements, on a single node, with loose policy, but can scale its
-resource pool infinitely to meet demand; Slurm excels at quickly scheduling
-workloads that run for a finite amount of time, with well defined resource
-requirements and topology, on multiple nodes, with strict policy, but its
-resource pool is known.
+kinds of workloads. Kubernetes excels at scheduling workloads that run for an
+indefinite amount of time, with potentially vague resource requirements, on a
+single node, with loose policy, but can scale its resource pool infinitely to
+meet demand; Slurm excels at quickly scheduling workloads that run for a finite
+amount of time, with well-defined resource requirements and topology, on
+multiple nodes, with strict policy, and a known resource pool.
 
 This project enables the best of both workload managers. It contains a
-[Kubernetes] scheduler to manage select workload from Kubernetes.
+[Kubernetes] scheduler to manage select workloads from Kubernetes, which allows
+for co-location of Kubernetes and Slurm workloads within the same cluster. This
+means the same hardware can be used to run both traditional HPC and cloud-like
+workloads, reducing operating costs.
+
+Using `slurm-bridge`, workloads can be submitted from within a Kubernetes
+context as a `Pod`, `PodGroup`, `Job`, `JobSet`, or `LeaderWorkerSet` and from a
+Slurm context using `salloc` or `sbatch`. Workloads submitted via Slurm will
+execute as they would in a Slurm-only environment, using `slurmd`. Workloads
+submitted from Kubernetes will have their resource requirements translated into
+a representative Slurm job by `slurm-bridge`. That job will serve as a
+placeholder and will be scheduled by the Slurm controller. Upon resource
+allocation to a K8s workload by the Slurm controller, `slurm-bridge` will bind
+the workload's pod(s) to the allocated node(s). At that point, the kubelet will
+launch and run the pod the same as it would within a standard Kubernetes
+instance
 
 <img src="./docs/_static/images/slurm-bridge_big-picture.svg" alt="Slurm Bridge Architecture" width="100%" height="auto" />
 

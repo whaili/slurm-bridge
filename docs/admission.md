@@ -14,14 +14,27 @@
 
 ## Overview
 
-The admission controller is a [webhook] for Pods. Any pods created in certain
-namespaces will be modified so our [scheduler] will schedule them instead of the
-default scheduler.
+[The Kubernetes documentation](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/)
+defines admission controllers as:
+
+> a piece of code that intercepts requests to the Kubernetes API server prior to
+> persistence of the resource, but after the request is authenticated and
+> authorized.
+
+It also states that:
+
+> Admission control mechanisms may be validating, mutating, or both. Mutating
+> controllers may modify the data for the resource being modified; validating
+> controllers may not.
+
+The `slurm-bridge` admission controller is a mutating controller. It modifies
+any pods within namespaces specified in `helm/slurm-bridge/values.yaml` to use
+the `slurm-bridge` [scheduler] instead of the default Kubernetes scheduler.
 
 ## Design
 
-Any pods created in certain namespaces will have their `.spec.schedulerName`
-changed to our [scheduler].
+Any pods created in the specified namespaces will have their
+`.spec. schedulerName` changed to the slurm-bridge [scheduler].
 
 Managed namespaces are defined as a list of namespace as configured in the
 admission controller's `values.yaml` for `managedNamespaces[]`. Alternatively, a
@@ -47,4 +60,3 @@ sequenceDiagram
 <!-- Links -->
 
 [scheduler]: scheduler.md
-[webhook]: https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
