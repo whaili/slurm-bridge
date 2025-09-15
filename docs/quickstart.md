@@ -98,9 +98,11 @@ spec:
 EOF
 ```
 
-**NOTE**: A long lifetime is used as `slurm-bridge` does not automatically
-restart when the secret is refreshed. This is a limitation that will be
-addressed in a subsequent release.
+> [!NOTE]
+>
+> A long lifetime is used as `slurm-bridge` does not automatically restart when
+> the secret is refreshed. This is a limitation that will be addressed in a
+> subsequent release.
 
 When running Slurm on baremetal:
 
@@ -119,9 +121,11 @@ helm install slurm-bridge oci://ghcr.io/slinkyproject/charts/slurm-bridge \
   --values=values-bridge.yaml --version=0.3.0 --namespace=slinky --create-namespace
 ```
 
-**NOTE**: `slurm-bridge` must be able to communicate with Slurm REST API. By
-default, it assumes a default Slurm chart installation and uses
-http://slurm-restapi.slurm:6820.
+> [!NOTE]
+>
+> `slurm-bridge` must be able to communicate with Slurm REST API. By default, it
+> assumes a default Slurm chart installation and uses
+> http://slurm-restapi.slurm:6820.
 
 You can check if your cluster deployed successfully with:
 
@@ -228,8 +232,10 @@ This section assumes [LeaderWorkerSet] is installed.
 LeaderWorkerSet groups will be co-scheduled so pods of each group will be
 guaranteed to launch together.
 
-**NOTE**: Topology-aware placement is not supported yet, so some features of
-LeaderWorkerSet may not behave as expected.
+> [!NOTE]
+>
+> Topology-aware placement is not supported yet, so some features of
+> LeaderWorkerSet may not behave as expected.
 
 <!-- Links -->
 
