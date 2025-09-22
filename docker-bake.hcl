@@ -34,6 +34,13 @@ target "_common" {
   }
 }
 
+target "_multiarch" {
+  platforms = [
+    "linux/amd64",
+    "linux/arm64"
+  ]
+}
+
 ################################################################################
 
 group "default" {
@@ -47,7 +54,7 @@ group "default" {
 ################################################################################
 
 target "scheduler" {
-  inherits = ["_common"]
+  inherits = ["_common", "_multiarch"]
   dockerfile = "Dockerfile"
   target = "scheduler"
   labels = {
@@ -67,7 +74,7 @@ target "scheduler" {
 ################################################################################
 
 target "controllers" {
-  inherits = ["_common"]
+  inherits = ["_common", "_multiarch"]
   dockerfile = "Dockerfile"
   target = "controllers"
   labels = {
@@ -87,7 +94,7 @@ target "controllers" {
 ################################################################################
 
 target "admission" {
-  inherits = ["_common"]
+  inherits = ["_common", "_multiarch"]
   dockerfile = "Dockerfile"
   target = "admission"
   labels = {
