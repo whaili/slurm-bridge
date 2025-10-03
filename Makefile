@@ -299,7 +299,7 @@ golangci-lint-fmt: golangci-lint-bin ## Run golangci-lint fmt.
 CODECOV_PERCENT ?= 70
 
 .PHONY: test
-test: manifests generate fmt vet envtest ## Run tests.
+test: fmt vet envtest ## Run tests.
 	rm -f cover.out cover.html
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" \
 		go test $$(go list ./... | grep -v /e2e) -v -coverprofile cover.out.tmp
