@@ -61,13 +61,15 @@ push-charts: build-chart ## Push OCI packages.
 UNAME_S ?= $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
 	CP_FLAGS = -v -n
+	SED = gsed
 else
 	CP_FLAGS = -v --update=none
+	SED = sed
 endif
 
 .PHONY: values-dev
 values-dev: ## Safely initialize values-dev.yaml files for Helm charts.
-	find "helm/" -type f -name "values.yaml" | sed 'p;s/\.yaml/-dev\.yaml/' | xargs -n2 cp $(CP_FLAGS)
+	find "helm/" -type f -name "values.yaml" | $(SED) 'p;s/\.yaml/-dev\.yaml/' | xargs -n2 cp $(CP_FLAGS)
 
 ifndef ignore-not-found
   ignore-not-found = false
@@ -176,7 +178,7 @@ set -e; \
 package=$(2)@$(3) ;\
 echo "Downloading $${package}" ;\
 GOBIN=$(LOCALBIN) go install $${package} ;\
-mv "$$(echo "$(1)" | sed "s/-$(3)$$//")" $(1) ;\
+mv "$$(echo "$(1)" | $(SED) "s/-$(3)$$//")" $(1) ;\
 }
 endef
 
@@ -240,9 +242,9 @@ generate-docs: pandoc-bin
 	cat ./docs/_static/toc.rst >> docs/index.rst
 	printf '\n' >> docs/index.rst
 	find docs -type f -name "*.md" -exec basename {} \; | awk '{print "    "$$1}' | env LC_ALL=C sort >> docs/index.rst
-	sed -i -E '/<.\/docs\/[A-Za-z]*.md/s/.\/docs\///g' docs/index.rst
-	sed -i -E '/.\/docs\/.*.svg/s/.\/docs\///g' docs/index.rst
-	sed -i -E '/<[A-Za-z]*.md>`/s/.md>/.html>/g' docs/index.rst
+	$(SED) -i -E '/<.\/docs\/[A-Za-z]*.md/s/.\/docs\///g' docs/index.rst
+	$(SED) -i -E '/.\/docs\/.*.svg/s/.\/docs\///g' docs/index.rst
+	$(SED) -i -E '/<[A-Za-z]*.md>`/s/.md>/.html>/g' docs/index.rst
 
 DOCS_IMAGE ?= $(REGISTRY)/sphinx
 
