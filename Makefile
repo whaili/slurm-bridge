@@ -2,8 +2,6 @@
 
 VERSION ?= 0.4.0
 
-# Image URL to use all building/pushing image targets
-
 # CONTAINER_TOOL defines the container tool to be used for building images.
 # Be aware that the target commands are only tested with Docker which is
 # scaffolded by default. However, you might want to replace it to use other
@@ -56,14 +54,6 @@ push-images: build-images ## Push container images.
 .PHONY: push-charts
 push-charts: build-chart ## Push OCI packages.
 	$(foreach chart, $(wildcard ./*.tgz), helm push ${chart} oci://$(REGISTRY)/charts ;)
-
-.PHONY: build-scheduler
-build-scheduler: ## Build kube-scheduler binary
-	$(GO_BUILD_ENV) go build -ldflags '-X k8s.io/component-base/version.gitVersion=v$(VERSION) -w' -o bin/kube-scheduler cmd/scheduler/main.go
-
-.PHONY: run
-run: manifests generate fmt tidy vet ## Run a controller from your host.
-	go run ./cmd/controllers/main.go
 
 ##@ Deployment
 
