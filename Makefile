@@ -114,8 +114,8 @@ HELM_DOCS ?= $(LOCALBIN)/helm-docs-$(HELM_DOCS_VERSION)
 PANDOC ?= $(LOCALBIN)/pandoc-$(PANDOC_VERSION)
 
 ## Tool Versions
-KUSTOMIZE_VERSION ?= v5.3.0
-CONTROLLER_TOOLS_VERSION ?= v0.14.0
+KUSTOMIZE_VERSION ?= v5.6.0
+CONTROLLER_TOOLS_VERSION ?= v0.18.0
 ENVTEST_VERSION ?= release-0.21
 GOVULNCHECK_VERSION ?= latest
 GOLANGCI_LINT_VERSION ?= v2.1.6
@@ -184,7 +184,7 @@ endef
 
 # Set the Operator SDK version to use. By default, what is installed on the system is used.
 # This is useful for CI or a project to utilize a specific version of the operator-sdk toolkit.
-OPERATOR_SDK_VERSION ?= v1.36.1
+OPERATOR_SDK_VERSION ?= v1.39.2
 
 .PHONY: operator-sdk
 OPERATOR_SDK ?= $(LOCALBIN)/operator-sdk
