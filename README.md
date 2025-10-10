@@ -20,7 +20,7 @@ Run [Slurm] as a [Kubernetes] scheduler. A [Slinky] project.
   - [Overview](#overview)
   - [Features](#features)
     - [Slurm](#slurm)
-  - [Requirements](#requirements)
+  - [Compatibility](#compatibility)
   - [Limitations](#limitations)
   - [Installation](#installation)
   - [Documentation](#documentation)
@@ -76,12 +76,12 @@ Slurm is a full featured HPC workload manager. To highlight a few features:
 - [**Fairshare**][slurm-fairshare]: distribute resources equitably among users
   and accounts based on historical usage.
 
-## Requirements
+## Compatibility
 
-- **Kubernetes Version**: >=
-  [v1.29](https://kubernetes.io/blog/2023/12/13/kubernetes-v1-29-release/)
-- **Slurm Version**: >=
-  [25.05](https://www.schedmd.com/slurm-version-25-05-0-is-now-available/)
+| Software   |                             Minimum Version                              |
+| :--------- | :----------------------------------------------------------------------: |
+| Kubernetes | [v1.34](https://kubernetes.io/blog/2025/08/27/kubernetes-v1-34-release/) |
+| Slurm      | [25.05](https://www.schedmd.com/slurm-version-25-05-0-is-now-available/) |
 
 ## Limitations
 

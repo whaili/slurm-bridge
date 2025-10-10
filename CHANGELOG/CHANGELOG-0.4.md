@@ -1,3 +1,12 @@
+## v0.4.1
+
+### Fixed
+
+- Update kubeVersion parsing to handle provider suffixes (e.g., GKE
+  x.y.z-gke.a).
+- Fixed image rendering in docs/index.rst.
+- Conversion of GHFM admonitions from .md to .rst.
+
 ## v0.4.0
 
 ### Added

@@ -24,7 +24,7 @@ Table of Contents
 
     - `Slurm <#slurm>`__
 
-  - `Requirements <#requirements>`__
+  - `Compatibility <#compatibility>`__
   - `Limitations <#limitations>`__
   - `Installation <#installation>`__
   - `Documentation <#documentation>`__
@@ -96,13 +96,16 @@ features:
   resources equitably among users and accounts based on historical
   usage.
 
-Requirements
-------------
+Compatibility
+-------------
 
-- **Kubernetes Version**: >=
-  `v1.29 <https://kubernetes.io/blog/2023/12/13/kubernetes-v1-29-release/>`__
-- **Slurm Version**: >=
-  `25.05 <https://www.schedmd.com/slurm-version-25-05-0-is-now-available/>`__
++------------+-----------------------------------------------------------------------------+
+| Software   | Minimum Version                                                             |
++============+=============================================================================+
+| Kubernetes | `v1.34 <https://kubernetes.io/blog/2025/08/27/kubernetes-v1-34-release/>`__ |
++------------+-----------------------------------------------------------------------------+
+| Slurm      | `25.05 <https://www.schedmd.com/slurm-version-25-05-0-is-now-available/>`__ |
++------------+-----------------------------------------------------------------------------+
 
 Limitations
 -----------
