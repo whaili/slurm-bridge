@@ -112,14 +112,6 @@ The helm chart used by `slurm-bridge` has a number of parameters in
 that can be modified to tweak various parameters of slurm-bridge. Most of these
 values should work without modification.
 
-Downloading `values.yaml`:
-
-```bash
-VERSION=v0.4.0
-curl -L https://raw.githubusercontent.com/SlinkyProject/slurm-bridge/refs/tags/$VERSION/helm/slurm-bridge/values.yaml \
-  -o values-bridge.yaml
-```
-
 Depending on your Slurm configuration, you may need to configure the following
 variables:
 
@@ -137,9 +129,8 @@ variables:
 ##### 3. Install the `slurm-bridge` Helm Chart:
 
 ```bash
-VERSION=0.4.0
 helm install slurm-bridge oci://ghcr.io/slinkyproject/charts/slurm-bridge \
-  --values=values-bridge.yaml --version=$VERSION --namespace=slinky --create-namespace
+  --namespace=slinky --create-namespace
 ```
 
 > [!NOTE]
