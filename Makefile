@@ -1,6 +1,6 @@
 ##@ General
 
-VERSION ?= 0.4.0
+VERSION ?= 1.0.0
 
 # CONTAINER_TOOL defines the container tool to be used for building images.
 # Be aware that the target commands are only tested with Docker which is
