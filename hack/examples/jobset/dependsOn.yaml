@@ -16,6 +16,7 @@ spec:
           completions: 1
           template:
             spec:
+              schedulerName: slurm-bridge-scheduler
               containers:
                 - name: initjob
                   image: busybox:stable
@@ -39,6 +40,7 @@ spec:
           backoffLimit: 0
           template:
             spec:
+              schedulerName: slurm-bridge-scheduler
               containers:
                 - name: worker1
                   image: busybox:stable

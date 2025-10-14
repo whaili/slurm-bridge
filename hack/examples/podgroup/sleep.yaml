@@ -18,6 +18,7 @@ metadata:
     app: podgroup-sleep
     scheduling.x-k8s.io/pod-group: podgroup-sleep
 spec:
+  schedulerName: slurm-bridge-scheduler
   restartPolicy: Never
   containers:
     - name: sleep
@@ -40,6 +41,7 @@ metadata:
     app: podgroup-sleep
     scheduling.x-k8s.io/pod-group: podgroup-sleep
 spec:
+  schedulerName: slurm-bridge-scheduler
   restartPolicy: Never
   containers:
     - name: sleep
