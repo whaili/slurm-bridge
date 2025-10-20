@@ -1,6 +1,6 @@
 # slurm-bridge
 
-![Version: 0.4.0](https://img.shields.io/badge/Version-0.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 25.05](https://img.shields.io/badge/AppVersion-25.05-informational?style=flat-square)
+![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 25.05](https://img.shields.io/badge/AppVersion-25.05-informational?style=flat-square)
 
 Slurm as a Kubernetes Scheduler
 
@@ -31,7 +31,7 @@ Kubernetes: `>= 1.34.0-0`
 | admission.enabled | bool | `true` | Enables admission controller. |
 | admission.image | object | `{"repository":"ghcr.io/slinkyproject/slurm-bridge-admission","tag":""}` | The image to use, `${repository}:${tag}`. Ref: https://kubernetes.io/docs/concepts/containers/images/#image-names |
 | admission.managedNamespaceSelector | object | `{}` | A label selector to select namespaces to be monitored by the pod admission controller. If this is set, managedNamespaces will be ignored. Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors |
-| admission.managedNamespaces | list | `["slurm-bridge"]` | List of namespaces to be monitored by the pod admission controller. Pods created in any of these namespaces will have their `.spec.schedulerName` changed to slurm-bridge. |
+| admission.managedNamespaces | list | `[]` | List of namespaces to be monitored by the pod admission controller. Pods created in any of these namespaces will have their `.spec.schedulerName` changed to slurm-bridge. |
 | admission.nodeSelector | map[string]string | `{}` | Node label selector for pod assignment. Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
 | admission.priorityClassName | string | `""` | Set the priority class to use. Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#priorityclass |
 | admission.replicas | int | `1` | Set the number of replicas to deploy. |
@@ -60,6 +60,6 @@ Kubernetes: `>= 1.34.0-0`
 | schedulerConfig.mcsLabel | string | `"kubernetes"` | Set the Slurm MCS Label to use for placeholder jobs. Ref: https://slurm.schedmd.com/sbatch.html#OPT_mcs-label |
 | schedulerConfig.partition | string | `"slurm-bridge"` | Set the default Slurm partition to use for placeholder jobs. Ref: https://slurm.schedmd.com/sbatch.html#OPT_partition |
 | schedulerConfig.schedulerName | string | `"slurm-bridge-scheduler"` | Set the name of the scheduler. |
-| sharedConfig.slurmJwtSecret | string | `"slurm-bridge-jwt-token"` | The secret containing a SLURM_JWT token for authentication. |
+| sharedConfig.slurmJwtSecret | string | `"slurm-bridge-token"` | The secret containing a SLURM_JWT token for authentication. |
 | sharedConfig.slurmRestApi | string | `"http://slurm-restapi.slurm:6820"` | The Slurm REST API URL in the form of: `[protocol]://[host]:[port]` |
 

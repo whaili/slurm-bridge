@@ -207,7 +207,7 @@ function slurm-bridge::nodes() {
 }
 
 function slurm::install() {
-	local version="0.4.0"
+	local version="0.4.1"
 
 	local slurmOperator="slurm-operator"
 	if [ "$(helm list --all-namespaces --short --filter="^${slurmOperator}$" | wc -l)" -eq 0 ]; then
@@ -230,20 +230,18 @@ function slurm-bridge::secret() {
 
 function kjob::install() {
 	local version="0.1.0"
-	local kjob_path="/tmp/kjob/"
-	mkdir -p ${kjob_path}
-	curl -L "https://github.com/kubernetes-sigs/kjob/archive/refs/tags/v${version}.tar.gz" -o $kjob_path/kjob-${version}.tar.gz
+	local kjob_path
+	kjob_path=$(mktemp -d)
+	git clone -b "v${version}" https://github.com/kubernetes-sigs/kjob.git "${kjob_path}"
 	(
-		cd $kjob_path
-		tar xzf kjob-${version}.tar.gz
-		cd kjob-${version}
+		cd "$kjob_path"
 		make install
 		make kubectl-kjob
+		cp "./bin/kubectl-kjob" "$SCRIPT_DIR/kubectl-kjob"
 	)
 	kubectl apply -f "${SCRIPT_DIR}"/kjob.yaml
-	cp $kjob_path/kjob-${version}/bin/kubectl-kjob "$SCRIPT_DIR/kubectl-kjob"
 	echo -e "\nRun the following command to install the kubectl kjob plugin:"
-	echo -e "sudo cp /tmp/kjob/kjob-${version}/bin/kubectl-kjob /usr/local/bin/kubectl-kjob\n"
+	echo -e "sudo cp ${SCRIPT_DIR}/kubectl-kjob /usr/local/bin/kubectl-kjob\n"
 }
 
 function main::help() {

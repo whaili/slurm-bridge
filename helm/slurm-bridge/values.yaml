@@ -99,8 +99,9 @@ admission:
   # -- List of namespaces to be monitored by the pod admission controller.
   # Pods created in any of these namespaces will have their `.spec.schedulerName`
   # changed to slurm-bridge.
-  managedNamespaces:
-    - slurm-bridge
+  managedNamespaces: []
+    # - managedNamespace1
+    # - managedNamespace2
   # -- A label selector to select namespaces to be monitored by the pod admission controller.
   # If this is set, managedNamespaces will be ignored.
   # Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
@@ -144,4 +145,4 @@ sharedConfig:
   # -- The Slurm REST API URL in the form of: `[protocol]://[host]:[port]`
   slurmRestApi: http://slurm-restapi.slurm:6820
   # -- The secret containing a SLURM_JWT token for authentication.
-  slurmJwtSecret: slurm-bridge-jwt-token
+  slurmJwtSecret: slurm-bridge-token

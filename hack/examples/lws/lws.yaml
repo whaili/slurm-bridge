@@ -14,6 +14,7 @@ spec:
         labels:
           role: leader
       spec:
+        schedulerName: slurm-bridge-scheduler
         containers:
           - name: leader
             image: busybox:stable

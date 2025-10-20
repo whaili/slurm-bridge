@@ -10,7 +10,7 @@ spec:
     key: jwt_hs256.key
     namespace: slurm
   secretRef:
-    name: slurm-bridge-jwt-token
+    name: slurm-bridge-token
     key: auth-token
   username: slurm
   refresh: true

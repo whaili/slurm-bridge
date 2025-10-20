@@ -112,14 +112,6 @@ The helm chart used by `slurm-bridge` has a number of parameters in
 that can be modified to tweak various parameters of slurm-bridge. Most of these
 values should work without modification.
 
-Downloading `values.yaml`:
-
-```bash
-VERSION=v0.4.0
-curl -L https://raw.githubusercontent.com/SlinkyProject/slurm-bridge/refs/tags/$VERSION/helm/slurm-bridge/values.yaml \
-  -o values-bridge.yaml
-```
-
 Depending on your Slurm configuration, you may need to configure the following
 variables:
 
@@ -131,15 +123,12 @@ variables:
   the Slurm REST API. Changing this value may be necessary if you run the REST
   API on a different URL or port. The default value of this variable is
   `http://slurm-restapi.slurm:6820`
-- `admission.managedNamespaces` - the namespace within which slurm-bridge is
-  responsible for scheduling pods. Defaults to `slurm-bridge`.
 
 ##### 3. Install the `slurm-bridge` Helm Chart:
 
 ```bash
-VERSION=0.4.0
 helm install slurm-bridge oci://ghcr.io/slinkyproject/charts/slurm-bridge \
-  --values=values-bridge.yaml --version=$VERSION --namespace=slinky --create-namespace
+  --namespace=slinky --create-namespace
 ```
 
 > [!NOTE]

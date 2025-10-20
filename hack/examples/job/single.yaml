@@ -11,6 +11,7 @@ spec:
   parallelism: 1
   template:
     spec:
+      schedulerName: slurm-bridge-scheduler
       containers:
         - name: sleep
           image: busybox:stable

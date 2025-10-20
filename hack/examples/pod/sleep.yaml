@@ -8,6 +8,7 @@ metadata:
     slinky.slurm.net/job-name: pod-single
     slinky.slurm.net/timelimit: '1'
 spec:
+  schedulerName: slurm-bridge-scheduler
   restartPolicy: Never
   containers:
     - name: pod-single
