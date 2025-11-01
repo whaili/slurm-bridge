@@ -1,34 +1,231 @@
 
 
 
+# 🎯 Slurm-Bridge 实际使用方式
 
+## 用户如何提交计算任务？
+
+**用户并不是直接提交 Pod YAML**，而是通过标准的 Kubernetes 工作负载 API 来提交计算任务，slurm-bridge 在后台自动处理调度。
+
+### 📋 **主要提交方式**
+
+#### **1. Kubernetes Jobs（批处理任务）**
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: data-processing
+spec:
+  parallelism: 10  # 并行运行10个Pod
+  template:
+    spec:
+      schedulerName: slurm-bridge-scheduler
+      containers:
+      - name: processor
+        image: python:3.9
+        command: ["python", "process_data.py"]
+```
+
+#### **2. Deployments（无状态服务）**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-service
+  annotations:
+    slinky.slurm.net/partition: "web"  # Slurm分区
+spec:
+  replicas: 3  # 3个副本实例
+  selector:
+    matchLabels:
+      app: web-service
+  template:
+    spec:
+      schedulerName: slurm-bridge-scheduler
+      containers:
+      - name: web
+        image: nginx:latest
+```
+
+#### **3. StatefulSets（有状态服务）**
+```yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: database
+spec:
+  replicas: 1
+  serviceName: "database"
+  selector:
+    matchLabels:
+      app: database
+  template:
+    spec:
+      schedulerName: slurm-bridge-scheduler
+      containers:
+      - name: db
+        image: postgres:13
+```
+
+#### **4. JobSets（复杂工作流）**
+```yaml
+apiVersion: jobset.x-k8s.io/v1alpha2
+kind: JobSet
+metadata:
+  name: ml-pipeline
+spec:
+  replicatedJobs:
+  - name: data-loader
+    replicas: 2
+  - name: trainer
+    replicas: 4
+```
+
+#### **5. PodGroups（协同调度，如MPI）**
+```yaml
+apiVersion: scheduling.x-k8s.io/v1alpha1
+kind: PodGroup
+metadata:
+  name: mpi-job
+spec:
+  minMember: 4  # 至少4个Pod同时启动
+```
+
+#### **6. NodeSets（slurm-operator 批量节点）**
+```yaml
+apiVersion: slinky.slurm.net/v1alpha1
+kind: NodeSet
+metadata:
+  name: compute-cluster
+spec:
+  replicas: 20  # 20个计算节点
+  template:
+    spec:
+      containers:
+      - name: compute-node
+        image: hpc-node:latest
+```
+
+### 🎪 **实际使用场景**
+
+#### **AI/ML 训练任务**
+- 使用 Jobs 或 JobSets 提交训练任务
+- 通过注解指定 GPU 需求和时间限制
+- slurm-bridge 自动调度到最佳 GPU 节点
+
+#### **批量数据处理**
+- 使用 Kubernetes Jobs 并行处理大量��据
+- JobSet 管理复杂的多阶段工作流
+- PodGroup 确保相关任务协同启动
+
+#### **科学计算（MPI）**
+- 使用 PodGroup 或 LeaderWorkerSet
+- 确保多个计算节点同时启动
+- 支持 InfiniBand 等高速网络
+
+#### **微服务部署**
+- 使用 Deployments 部署无状态服务
+- 使用 StatefulSets 部署数据库等有状态服务
+- 在 HPC 环境中享受自动调度和负载均衡
+
+### 🔑 **关键机制**
+
+1. **用户使用熟悉的 Kubernetes API**，不需要学习 Slurm
+2. **通过注解控制 Slurm 行为**：时间限制、账户、分区等
+3. **自动调度到最佳节点**：基于 Slurm 的智能算法
+4. **支持多种工作负载**：从单个 Pod 到复杂的分布式应用
+
+### 📝 **提交命令示例**
+
+```bash
+# 提交批处理任务
+kubectl apply -f my-job.yaml
+
+# 提交微服务
+kubectl create deployment webapp --image=nginx --replicas=3
+
+# 查看 Slurm 调度状态
+kubectl describe pod my-job-xxxx
+```
+
+---
 
 ## 三层协作
+
+**🔧 重要修正说明**:
+- **slurm-operator 创建的 Pod 默认没有 schedulerName 字段**
+- **schedulerName 是由 slurm-bridge 的 admission controller 自动注入的**（对 managedNamespaces）
+- **Kubernetes API Server 根据 Pod.spec.schedulerName 进行路由**，这是 K8s 原生机制
+- **不是 slurm-operator 决定调度路径**，而是 admission controller + K8s API Server 共同作用
+
+### 📋 **两种主要场景**
+
+#### 场景 A：slurm-operator 批量创建（核心场景）
+```
+用户创建 NodeSet/LoginSet CRD
+↓
+slurm-operator 自动创建多个 Pod（无 schedulerName）
+↓
+admission controller 注入 schedulerName=slurm-bridge-scheduler
+↓
+所有 Pod 自动路由到 Slurm 调度器
+```
+
+#### 场景 B：用户手动创建单 Pod（辅助场景）
+```
+用户直接创建 Pod 或通过 Deployment 创建
+↓
+admission controller 检查命名空间
+↓
+如果是 managedNamespace，注入 slurm-bridge-scheduler
+↓
+Pod 使用 Slurm 调度器，否则使用默认调度器
+```
 ```mermaid
 graph TB
     subgraph architecture["🏗️ 完整架构图"]
         
         subgraph layer1["第 1 层: Kubernetes 原生层"]
+            user_deployment["用户创建 Deployment<br/>━━━━━━━━━<br/>kubectl apply deployment.yaml<br/>━━━━━━━━━<br/>触发: Deployment Controller"]
+
             k8s_ctrl["K8s 控制器<br/>━━━━━━━━━<br/>📦 Deployment Controller<br/>📦 ReplicaSet Controller<br/>📦 StatefulSet Controller<br/>━━━━━━━━━<br/>职责: 管理 Pod 数量"]
-            
-            k8s_sched["K8s 调度器<br/>━━━━━━━━━<br/>🎯 Default Scheduler<br/>━━━━━━━━━<br/>职责: Pod → Node 绑定<br/>(当 schedulerName 未指定时)"]
         end
         
         subgraph layer2["第 2 层: Slurm Operator 层"]
-            slurm_op["slurm-operator<br/>━━━━━━━━━<br/>🔧 自定义控制器<br/>━━━━━━━━━<br/>监听: NodeSet/LoginSet CRD<br/>━━━━━━━━━<br/>职责:<br/>✅ 创建/删除 Pod<br/>✅ 扩缩容<br/>✅ 配置管理<br/>❌ 不做调度决策"]
+            slurm_op["slurm-operator<br/>━━━━━━━━━<br/>🔧 自定义控制器<br/>━━━━━━━━━<br/>监听: NodeSet/LoginSet CRD<br/>━━━━━━━━━<br/>职责:<br/>✅ 创建/删除 Pod<br/>✅ 扩缩容<br/>✅ 配置管理<br/>❌ 不做调度决策<br/>❌ 不决定调度路径"]
         end
-        
-        subgraph layer3["第 3 层: Slurm Bridge 层"]
-            slurm_bridge["slurm-bridge<br/>━━━━━━━━━<br/>🌉 调度器插件<br/>━━━━━━━━━<br/>监听: schedulerName=slurm-bridge 的 Pod<br/>━━━━━━━━━<br/>职责:<br/>✅ 转换 Pod → Slurm Job<br/>✅ 等待 slurmctld 调度<br/>✅ 绑定 Pod 到节点<br/>❌ 不创建 Pod<br/>❌ 不做调度决策"]
+
+        subgraph layer3["第 3 层: 调度器层"]
+            k8s_sched["K8s Default Scheduler<br/>━━━━━━━━━<br/>🎯 处理 schedulerName=default<br/>━━━━━━━━━<br/>职责: Pod → Node 绑定"]
+
+            slurm_bridge["slurm-bridge<br/>━━━━━━━━━<br/>🌉 调度器插件<br/>━━━━━━━━━<br/>处理 schedulerName=slurm-bridge<br/>━━━━━━━━━<br/>职责:<br/>✅ 转换 Pod → Slurm Job<br/>✅ 等待 slurmctld 调度<br/>✅ 绑定 Pod 到节点<br/>❌ 不创建 Pod<br/>❌ 不做调度决策"]
         end
-        
+
         subgraph layer4["第 4 层: Slurm 核心层"]
             slurmctld["slurmctld<br/>━━━━━━━━━<br/>🧠 Slurm 调度器<br/>━━━━━━━━━<br/>职责:<br/>✅ 真正的调度决策<br/>✅ 选择最佳节点<br/>✅ Fair-share/Priority<br/>✅ QoS 策略"]
         end
-        
-        k8s_ctrl -.->|创建 Pod 对象| k8s_sched
-        slurm_op -.->|创建 Pod 对象| k8s_sched
-        slurm_op -.->|创建 Pod 对象| slurm_bridge
+
+        user_deployment -->|触发 Deployment| k8s_ctrl
+
+        k8s_ctrl -->|创建 Pod 对象<br/>默认无 schedulerName| admission_step
+
+        slurm_op -->|创建 Pod 对象<br/>默认无 schedulerName| admission_step{Admission Controller}
+
+        user_direct["用户直接创建 Pod<br/>kubectl apply pod.yaml"] -->|创建 Pod 对象<br/>默认无 schedulerName| admission_step
+
+        admission_step -->|slurm-operator Pod<br/>在 managedNamespaces| slurm_bridge_inject["Pod<br/>schedulerName: slurm-bridge-scheduler"]
+        admission_step -->|K8s控制器创建的 Pod<br/>在 managedNamespaces| k8s_bridge_inject["K8s Pod<br/>schedulerName: slurm-bridge-scheduler"]
+        admission_step -->|用户直接创建 Pod<br/>在 managedNamespaces| user_bridge_inject["用户 Pod<br/>schedulerName: slurm-bridge-scheduler"]
+        admission_step -->|其他情况 Pod<br/>其他命名空间| k8s_sched_default["Pod<br/>schedulerName: default"]
+
+        k8s_sched_default --> k8s_sched
+        slurm_bridge_inject --> slurm_bridge
+        k8s_bridge_inject --> slurm_bridge
+        user_bridge_inject --> slurm_bridge
+
+        note_router["🔧 Kubernetes API Server 路由机制<br/>根据 Pod.spec.schedulerName<br/>分发到对应调度器"]
+        k8s_sched -.-> note_router
+        slurm_bridge -.-> note_router
         slurm_bridge -->|请求调度| slurmctld
         slurmctld -.->|返回节点选择| slurm_bridge
         slurm_bridge -.->|绑定 Pod| k8s_api[K8s API Server]
@@ -57,57 +254,55 @@ sequenceDiagram
     
     rect rgb(240, 248, 255)
         Note over User,Node: 场景 1: 创建 NodeSet (operator 控制器工作)
-        
+
         User->>K8sAPI: kubectl apply nodeset.yaml<br/>(replicas: 3)
         K8sAPI->>CRD: 创建 NodeSet 对象
-        
+
         Note over OpCtrl: operator 的 Watch 机制触发
         CRD->>OpCtrl: NodeSet 创建事件
         activate OpCtrl
-        
+
         Note over OpCtrl: 🔧 控制器协调逻辑<br/>Reconcile Loop
         OpCtrl->>OpCtrl: 计算需要 3 个 Pod
-        
+
         OpCtrl->>K8sAPI: 创建 Pod-0
         OpCtrl->>K8sAPI: 创建 Pod-1
         OpCtrl->>K8sAPI: 创建 Pod-2
-        
+
         Note over OpCtrl: ✅ 控制器完成<br/>管理了资源数量<br/>❌ 不参与调度
         deactivate OpCtrl
-        
-        Note over K8sAPI: Pod 对象已创建<br/>但还没有分配节点<br/>(NodeName 为空)
+
+        Note over K8sAPI: Pod 对象已创建<br/>经过 admission controller<br/>注入 schedulerName
     end
-    
+
     rect rgb(255, 248, 240)
         Note over User,Node: 场景 2a: K8s 原生调度 (默认调度器)
-        
-        Note over K8sAPI: Pod 的 schedulerName<br/>未指定或为 "default-scheduler"
-        
+
+        Note over K8sAPI: Pod 经过 admission<br/>schedulerName: default-scheduler<br/>在非管理命名空间中
+
         K8sAPI->>K8sSched: Pod 等待调度
         activate K8sSched
-        
+
         Note over K8sSched: 🎯 K8s 调度器决策<br/>1. 过滤可用节点<br/>2. 评分排序<br/>3. 选择最佳节点
-        
+
         K8sSched->>K8sSched: 选择 worker-node-1
         K8sSched->>K8sAPI: Bind Pod to worker-node-1
         deactivate K8sSched
-        
+
         K8sAPI->>Node: kubelet 拉起容器
         Node->>Slurmctld: slurmd 注册
-        
+
         Note over Node,Slurmctld: slurmd 已运行<br/>可以接受 Slurm 作业
     end
-    
+
     rect rgb(240, 255, 240)
         Note over User,Node: 场景 2b: Slurm 调度 (bridge 插件)
-        
-        User->>K8sAPI: kubectl apply pod.yaml<br/>(schedulerName: slurm-bridge)
-        
-        Note over K8sAPI: Pod 对象创建<br/>schedulerName=slurm-bridge
-        
+
+        Note over K8sAPI: Pod 经过 admission<br/>schedulerName: slurm-bridge-scheduler<br/>在管理命名空间中
+
         K8sAPI->>BridgeSched: Pod 等待调度
         activate BridgeSched
-        
+
         Note over BridgeSched: 🌉 Bridge 转换器<br/>不做调度决策<br/>只做格式转换
         
         BridgeSched->>BridgeSched: 提取 Pod 资源需求<br/>CPU: 4 cores<br/>Memory: 8Gi<br/>GPU: 1
@@ -440,11 +635,4 @@ sequenceDiagram
         
         Note over User,Kubelet: ✅ 完整流程结束<br/>资源已释放
     end
-```
-
-
-
-
-```mermaid
-
 ```
